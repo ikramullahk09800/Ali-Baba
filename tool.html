@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="hi"><head>
+<meta charset="UTF-8">
+<title>Code → GitHub Tool (FIXED)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui;background:#0d1117;color:#e6edf3;padding:20px}
+.box{max-width:860px;margin:0 auto;background:#161b22;border:1px solid #30363d;border-radius:14px;padding:24px}
+h1{font-size:24px;color:#7ee787;margin-bottom:4px}
+p{color:#8b949e;font-size:13px;margin-bottom:16px;line-height:1.6}
+label{display:block;font-size:12px;color:#8b949e;font-weight:700;margin:12px 0 6px}
+input{width:100%;padding:11px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;font-family:monospace;font-size:13px}
+textarea{width:100%;min-height:300px;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;color:#e6edf3;font-family:monospace;font-size:13px;line-height:1.5}
+button{width:100%;padding:13px;border:none;border-radius:8px;font-weight:800;font-size:15px;cursor:pointer;margin-top:10px}
+.primary{background:#238636;color:#fff}
+.primary:hover{background:#2ea043}
+.sec{background:#21262d;color:#e6edf3;border:1px solid #30363d}
+.quick{display:flex;gap:8px;margin-top:8px}
+.quick button{flex:1;padding:8px;font-size:12px;margin-top:0}
+.log{margin-top:14px;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px;height:170px;overflow:auto;font-family:monospace;font-size:12px;white-space:pre-wrap}
+.ok{color:#3fb950}.err{color:#f85149}.warn{color:#d29922}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>🛠️ Code → GitHub (FIXED ✅)</h1>
+<p>Code paste karo → 👁️ Preview → 🚀 Push. Phir 🌐 Install se ye tool tumhari website par hamesha ke liye lag jayega.</p>
+
+<label>GitHub Token</label>
+<input id="token" type="password" placeholder="github_pat_...">
+
+<label>File path</label>
+<input id="path" value="signup.html">
+<div class="quick">
+<button class="sec" onclick="setPath('index.html')">index.html</button>
+<button class="sec" onclick="setPath('login.html')">login.html</button>
+<button class="sec" onclick="setPath('signup.html')">signup.html</button>
+<button class="sec" onclick="setPath('tool.html')">tool.html</button>
+</div>
+
+<label>Code paste karo / likho</label>
+<textarea id="code" spellcheck="false" placeholder="Yahan HTML code paste karo..."></textarea>
+
+<button class="sec" onclick="preview()">👁️ Preview — browser mein dekho</button>
+<button class="primary" onclick="push()">🚀 Push to GitHub</button>
+<button class="sec" onclick="installSelf()">🌐 Install tool on my website (EK baar)</button>
+
+<div id="log" class="log">Ready...<div class="">Path set: tool.html</div><div class="">🌐 Tool website par install ho raha hai...</div></div>
+</div>
+
+<script>
+var OWNER="ikramullahk09800",REPO="Ali-Baba",BRANCH="main";
+var logBox=document.getElementById("log");
+window.onerror=function(m){log("❌ "+m,"err")};
+document.getElementById("token").value=localStorage.getItem("ali_baba_token")||"";
+
+function log(m,c){var d=document.createElement("div");d.className=c||"";d.textContent=m;logBox.appendChild(d);logBox.scrollTop=logBox.scrollHeight}
+function tok(){var t=document.getElementById("token").value.trim();if(t)localStorage.setItem("ali_baba_token",t);return t||localStorage.getItem("ali_baba_token")||""}
+function hdr(t){return{Authorization:"token "+t,Accept:"application/vnd.github.v3+json"}}
+function enc(p){return p.split("/").map(encodeURIComponent).join("/")}
+function setPath(p){document.getElementById("path").value=p;log("Path set: "+p)}
+
+function preview(){
+  var b=new Blob([document.getElementById("code").value],{type:"text/html"});
+  window.open(URL.createObjectURL(b));
+  log("👁️ Preview naye tab mein khula","ok");
+}
+
+async function pushFile(path,content,token,msg){
+  var sha=null;
+  var gr=await fetch("https://api.github.com/repos/"+OWNER+"/"+REPO+"/contents/"+enc(path)+"?ref="+BRANCH,{headers:hdr(token)});
+  if(gr.ok)sha=(await gr.json()).sha;
+  var body={message:msg,content:btoa(unescape(encodeURIComponent(content))),branch:BRANCH};
+  if(sha)body.sha=sha;
+  var ph=hdr(token);
+  ph["Content-Type"]="application/json";
+  var pr=await fetch("https://api.github.com/repos/"+OWNER+"/"+REPO+"/contents/"+enc(path),{method:"PUT",headers:ph,body:JSON.stringify(body)});
+  var pd=await pr.json();
+  if(!pr.ok)throw new Error(pd.message||("HTTP "+pr.status));
+  return sha?"UPDATE":"CREATE";
+}
+
+async function push(){
+  var t=tok();if(!t){log("❌ Token do!","err");return}
+  var p=document.getElementById("path").value.trim();
+  var c=document.getElementById("code").value;
+  if(!p||!c){log("❌ Path aur code dono chahiye!","err");return}
+  log("📤 "+p+" push ho raha hai...");
+  try{
+    var act=await pushFile(p,c,t,"Update "+p+" via Code Tool");
+    log("✅ "+p+" GitHub par "+act+" ho gayi!","ok");
+    log("🔗 https://"+OWNER+".github.io/"+REPO+"/"+p,"ok");
+  }catch(e){log("❌ "+e.message,"err")}
+}
+
+async function installSelf(){
+  var t=tok();if(!t){log("❌ Token do!","err");return}
+  log("🌐 Tool website par install ho raha hai...");
+  var html="<!DOCTYPE html>\n"+document.documentElement.outerHTML;
+  try{
+    await pushFile("tool.html",html,t,"Install Code Tool on website");
+    log("✅ Tool install ho gaya!","ok");
+    log("");
+    log("🎉 AB KABHI FILE SAVE NAHI — ye link bookmark karo:","warn");
+    log("🔗 https://"+OWNER+".github.io/"+REPO+"/tool.html","ok");
+    log("(Website par token EK baar dena hoga, phir saved)","warn");
+  }catch(e){log("❌ "+e.message,"err")}
+}
+</script>
+
+</body></html>
