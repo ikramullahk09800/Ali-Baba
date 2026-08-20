@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://ikramullahk09800.github.io/Ali-Baba/sitemap.xml
